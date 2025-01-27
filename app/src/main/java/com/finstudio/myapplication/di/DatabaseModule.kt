@@ -3,6 +3,8 @@ package com.finstudio.myapplication.di
 import android.content.Context
 import androidx.room.Room
 import com.finstudio.myapplication.data.database.Database
+import com.finstudio.myapplication.data.database.dao.LocationDao
+import com.finstudio.myapplication.data.database.dao.WeatherDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,14 +25,21 @@ object DatabaseModule {
             context.applicationContext,
             Database::class.java,
             "weather_store"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
 
     }
 
 
+    @Provides
+    fun provideWeatherDao(database: Database): WeatherDao {
+        return database.weatherDao()
+    }
 
 
-
+    @Provides
+    fun provideLocationDao(database: Database): LocationDao {
+        return  database.locationDao()
+    }
 
 
 

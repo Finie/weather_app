@@ -1,25 +1,24 @@
 package com.finstudio.myapplication.data.database.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.finstudio.myapplication.data.models.WeatherResponse
+import com.finstudio.myapplication.data.database.base.BaseDao
+import com.finstudio.myapplication.data.database.entity.WeatherData
 import kotlinx.coroutines.flow.Flow
 
 
 @Dao
-interface WeatherDao {
+interface WeatherDao: BaseDao<WeatherData> {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertUser(weatherResponse: WeatherResponse)
+    suspend fun insertWeather(weatherData: WeatherData)
 
-    @Delete
-    suspend fun deleteUser(weatherResponse: WeatherResponse)
+    @Query("SELECT * FROM weather WHERE isActive= 0 ORDER BY date ASC")
+    fun getWeatherRecords(): Flow<List<WeatherData>>
 
-    @Query("SELECT * FROM weather ORDER BY id ASC")
-    fun getAllUsers(): Flow<List<WeatherResponse>>
-
+    @Query("SELECT * FROM weather WHERE isActive= 1 ")
+    fun getCurrentWeather(): Flow<WeatherData?>
 
 }
