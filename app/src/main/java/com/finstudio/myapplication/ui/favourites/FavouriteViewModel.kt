@@ -1,4 +1,4 @@
-package com.finstudio.myapplication.ui.weather_visual
+package com.finstudio.myapplication.ui.favourites
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -7,10 +7,11 @@ import com.finstudio.myapplication.data.database.entity.LocationData
 import com.finstudio.myapplication.data.database.entity.WeatherData
 import com.finstudio.myapplication.data.repository.LocationRepository
 import com.finstudio.myapplication.data.repository.WeatherApiRepository
-import com.finstudio.myapplication.data.repository.WeatherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -20,19 +21,18 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class WeatherViewModel @Inject constructor(
-    private val weatherApiRepository: WeatherApiRepository,
-    private val locationRepository: LocationRepository,
-    private val weatherRepository: WeatherRepository
-) : ViewModel() {
+class FavouriteViewModel @Inject constructor(private val locationRepository: LocationRepository, private val weatherApiRepository: WeatherApiRepository): ViewModel() {
 
+    val locationList: Flow<List<LocationData>> = locationRepository.locations
 
-    val activeLocation: Flow<LocationData?> = locationRepository.activeLocation
+    // MutableStateFlow to hold the list of WeatherData
+    private val _savedWeatherData = MutableStateFlow<List<WeatherData>>(emptyList())
+    val savedWeatherData: StateFlow<List<WeatherData>> = _savedWeatherData
 
+    // MutableStateFlow to hold the active WeatherData
+    private val _activeWeather = MutableStateFlow<WeatherData?>(null)
+    val activeWeather: StateFlow<WeatherData?> = _activeWeather
 
-    val activeWeather: Flow<WeatherData?> = weatherRepository.activeWeather
-
-    val forecastData: Flow<List<WeatherData>> = weatherRepository.forecastData
 
 
     fun fetchWeatherData(longitude: Double, latitude: Double, units: String) {
@@ -47,16 +47,7 @@ class WeatherViewModel @Inject constructor(
 
                     // save current weather forecast for offline support
                     Log.i("Creating", "Creating location and weather data")
-
-                    saveLocationData(
-                        LocationData(
-                            id = locationId,
-                            longitude = longitude,
-                            latitude = latitude,
-                            name = result?.name ?: "Current Location",
-                            isFavourite = true,
-                            active = true
-                        ),
+                    updateActiveWeather(
                         WeatherData(
                             id = UUID.randomUUID(),
                             fellsLike = result?.main?.feels_like ?: 0.0,
@@ -96,7 +87,7 @@ class WeatherViewModel @Inject constructor(
                 if (forecastResponse.isSuccessful) {
                     for (response in forecastResponse.body()?.list!!) {
 
-                        saveWeatherData(
+                        addWeatherData(
                             WeatherData(
                                 id = UUID.randomUUID(),
                                 fellsLike = response.main?.feels_like ?: 0.0,
@@ -122,83 +113,17 @@ class WeatherViewModel @Inject constructor(
         }
     }
 
-
-    private fun saveLocationData(locationData: LocationData, weather: WeatherData?) {
-        viewModelScope.launch {
-
-            val location = locationRepository.activeLocation.first()
-
-            if (location != null) {
-                Log.e("Updating Location", "Updating Location data")
-                locationData.id = location.id
-
-                if (weather != null){
-                    weather.locationId = location.id
-                    saveActiveWeatherData(weather)
-                }
-
-                locationRepository.insertLocation(locationData)
-
-            } else {
-                Log.e("Creating Location", "Creating Location data")
-                locationRepository.insertLocation(locationData)
-
-                if (weather != null){
-                    saveActiveWeatherData(weather)
-                }
-            }
-
-
-        }
-
-    }
-
-    private fun saveActiveWeatherData(weatherData: WeatherData) {
-        viewModelScope.launch {
-
-            var weather = activeWeather.first()
-
-            if (weather != null) {
-                weatherData.id = weather.id
-                weatherRepository.insertWeather(weatherData)
-            } else {
-
-                weatherRepository.insertWeather(weatherData)
-            }
-
-        }
-    }
-
-    private fun saveWeatherData(weatherData: WeatherData) {
-
-        viewModelScope.launch {
-
-            val weatherList = forecastData.first()
-
-            if (!weatherList.isEmpty()) {
-                for (weather in weatherList) {
-                    if (weatherData.date == weather.date) {
-
-                        weatherData.id = weather.id
-                        weatherData.locationId = weather.locationId
-                        weatherRepository.insertWeather(weatherData)
-                    }
-
-                }
-            } else {
-
-                weatherRepository.insertWeather(weatherData)
-            }
+    // Function to add weather data to the list
+    private fun addWeatherData(weatherData: WeatherData) {
+        _savedWeatherData.update { currentList ->
+            currentList + weatherData
         }
     }
 
 
-    fun removeLocationData(locationData: LocationData) {
-        viewModelScope.launch {
 
-
-            locationRepository.deleteLocation(locationData)
-        }
+    private fun updateActiveWeather(weatherData: WeatherData) {
+        _activeWeather.value = weatherData
     }
 
 
@@ -209,3 +134,5 @@ class WeatherViewModel @Inject constructor(
 
 
 }
+
+
