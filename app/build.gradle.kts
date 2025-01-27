@@ -2,9 +2,11 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt.android)
     id("kotlin-kapt")
-    id("com.google.dagger.hilt.android")
 }
+
+
 
 android {
     namespace = "com.finstudio.myapplication"
@@ -18,16 +20,22 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+
+//        // Access the API key from the local.properties file
+//        val apiKey: String by project
+//        buildConfigField("String", "API_KEY", "\"$apiKey\"")
+
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
+
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -44,20 +52,42 @@ android {
 dependencies {
 
 
+    //hilt
     implementation(libs.hilt.android)
-    implementation(libs.androidx.room.common)
-    implementation(libs.androidx.room.ktx)
     kapt(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
-    // Retrofit for networking
-    implementation (libs.retrofit)
-    implementation (libs.converter.gson)
 
+    //Room database
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    kapt(libs.androidx.room.compiler)
+
+
+    // Retrofit for networking
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 
     // Kotlin Coroutines for Flow
-    implementation (libs.kotlinx.coroutines.core)
-    implementation (libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+
+    //location service
+    implementation(libs.play.services.location)
+
+    // Google Maps SDK for Android
+    implementation(libs.places)
+    implementation(libs.play.services.maps)
+
+    // Google maps Compose
+    implementation(libs.maps.compose)
+
+    //bottom navigation
+    implementation ("androidx.compose.material3:material3:1.3.1")
+    implementation ("androidx.navigation:navigation-compose:2.8.5")
+    implementation("androidx.compose.material:material-icons-extended:1.7.6")
+//    implementation(libs.material.ui)
+//    implementation(libs.navigation.compose)
 
 
     implementation(libs.androidx.core.ktx)
