@@ -12,7 +12,7 @@ import javax.inject.Inject
 
 class WeatherApiRepository  @Inject constructor(private val apiClientService: ApiClientService){
 
-    private val apiKey: String = "c14f401bded8cbb1929b156989f3906c"
+    private val apiKey: String = "Add weather api_key here"
 
 
     fun getCurrentLocationWeatherData(latitude: Double, longitude: Double, units: String): Flow<Response<WeatherResponse>> = flow {
