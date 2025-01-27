@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Places.initialize(applicationContext, "AIzaSyCMP2V0Wr1Vfq4mYxraRTrRRBhp15DOh4w")
+        Places.initialize(applicationContext, "addApiKeyHere")
 
         enableEdgeToEdge()
         // Request location permissions when the activity is created
